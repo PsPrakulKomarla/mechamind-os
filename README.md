@@ -258,4 +258,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**Built for industrial engineers, by industrial engineers.** 🏭🤖
+**Built for industrial engineers, by industrial engineers.** 🏭🤖#   m e c h a m i n d - o s  
+ 
