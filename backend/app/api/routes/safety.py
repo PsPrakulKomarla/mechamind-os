@@ -48,7 +48,7 @@ async def get_safety_zones(
                 "category": eq.category,
                 "location": eq.coordinates,
                 "area": eq.area,
-                "hazard_classification": eq.metadata.get("hazard_classification") if eq.metadata else None,
+                "hazard_classification": eq.meta.get("hazard_classification") if eq.meta else None,
                 "risk_level": eq.status,  # Use status as proxy
             })
     

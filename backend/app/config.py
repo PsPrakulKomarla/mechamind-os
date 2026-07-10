@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = ""
     DATABASE_POOL_SIZE: int = 10
     DATABASE_MAX_OVERFLOW: int = 20
+    DB_ECHO: bool = False
     
     # Supabase
     SUPABASE_URL: str = ""
@@ -57,6 +58,7 @@ class Settings(BaseSettings):
     DEFAULT_LLM_PROVIDER: str = "openai"  # openai, anthropic, ollama
     
     # Document Processing
+    UPLOAD_DIR: str = "./uploads"
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200

@@ -14,17 +14,14 @@ import json
 import pdfplumber
 import pytesseract
 from PIL import Image
-from pdf2image import convert_from_path
 import openpyxl
 from docx import Document as DocxDocument
-from unstructured.partition.auto import partition
-from unstructured.chunking.title import chunk_by_title
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.db.models import Document, DocumentChunk, DocumentType, DocumentStatus, Entity, EntityRelationship
-from app.services.rag.embeddings import EmbeddingService
+from app.db.models import Document, DocumentChunk, DocumentType, DocumentStatus, Entity, Relationship
+from app.services.rag.llm_provider import EmbeddingService
 from app.services.vector_store.qdrant_client import QdrantVectorStore
 from app.services.knowledge_graph.extractor import EntityExtractor
 from app.config import settings
@@ -81,8 +78,8 @@ class IngestionPipeline:
                 document.status = DocumentStatus.READY
                 document.processed_at = datetime.utcnow()
                 document.page_count = extracted.get("page_count")
-                document.metadata = {
-                    **(document.metadata or {}),
+                document.meta = {
+                    **(document.meta or {}),
                     "extracted_pages": extracted.get("page_count"),
                     "total_chunks": len(chunks),
                     "total_entities": len(entities),
@@ -164,6 +161,7 @@ class IngestionPipeline:
     
     async def _ocr_pdf(self, file_path: str) -> Dict[str, Any]:
         """Run OCR on PDF pages."""
+        from pdf2image import convert_from_path
         text_parts = []
         metadata = {"pages": []}
         
@@ -265,6 +263,7 @@ class IngestionPipeline:
     
     async def _extract_email(self, file_path: str) -> Dict[str, Any]:
         """Extract text from email file."""
+        from unstructured.partition.auto import partition
         # Use unstructured for email parsing
         elements = partition(filename=file_path)
         text = "\n\n".join([str(el) for el in elements])
@@ -277,6 +276,7 @@ class IngestionPipeline:
     
     async def _extract_generic(self, file_path: str) -> Dict[str, Any]:
         """Generic extraction using unstructured."""
+        from unstructured.partition.auto import partition
         elements = partition(filename=file_path)
         text = "\n\n".join([str(el) for el in elements])
         
@@ -288,6 +288,8 @@ class IngestionPipeline:
     
     async def _chunk_text(self, text: str, metadata: Dict) -> List[Dict[str, Any]]:
         """Split text into chunks with metadata."""
+        from unstructured.partition.auto import partition
+        from unstructured.chunking.title import chunk_by_title
         # Use unstructured's chunking for semantic chunks
         elements = partition(text=text)
         chunks = chunk_by_title(elements, max_characters=settings.CHUNK_SIZE, overlap=settings.CHUNK_OVERLAP)
@@ -335,7 +337,7 @@ class IngestionPipeline:
                 chunk_index=chunk["metadata"]["chunk_index"],
                 content=chunk["content"],
                 embedding=chunk["embedding"],
-                metadata=chunk["metadata"],
+                meta=chunk["metadata"],
                 token_count=chunk.get("token_count"),
             )
             db.add(db_chunk)
@@ -381,7 +383,7 @@ class IngestionPipeline:
             if "relationships" in ent:
                 for rel in ent["relationships"]:
                     if rel["target"] in entity_map:
-                        db_rel = EntityRelationship(
+                        db_rel = Relationship(
                             source_id=entity_map[ent["name"]],
                             target_id=entity_map[rel["target"]],
                             relationship_type=rel["type"],

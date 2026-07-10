@@ -158,7 +158,7 @@ async def chat(
         session_id=session.id,
         role="user",
         content=request.message,
-        metadata=request.context or {},
+        meta=request.context or {},
     )
     db.add(user_message)
     
@@ -239,7 +239,7 @@ Guidelines:
         role="assistant",
         content=response_content,
         citations=citations,
-        metadata={
+        meta={
             "model": settings.DEFAULT_LLM_PROVIDER,
             "rag_chunks_used": len(rag_result.get("chunks", [])),
         },
@@ -289,7 +289,7 @@ async def submit_feedback(
         rating=feedback.rating,
         feedback_text=feedback.feedback_text,
         vote=feedback.vote,
-        metadata=feedback.metadata or {},
+        meta=feedback.meta or {},
     )
     
     db.add(new_feedback)

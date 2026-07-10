@@ -102,7 +102,7 @@ class DocumentResponse(DocumentBase):
     mime_type: Optional[str] = None
     page_count: Optional[int] = None
     duration_seconds: Optional[float] = None
-    metadata: Dict[str, Any] = {}
+    meta: Dict[str, Any] = Field(default={}, alias="metadata")
     uploaded_by: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
@@ -111,6 +111,7 @@ class DocumentResponse(DocumentBase):
     
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class DocumentChunkResponse(BaseModel):
@@ -120,12 +121,13 @@ class DocumentChunkResponse(BaseModel):
     content: str
     page_number: Optional[int] = None
     section_title: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    meta: Dict[str, Any] = Field(default={}, alias="metadata")
     token_count: Optional[int] = None
     created_at: datetime
     
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class DocumentSearchResult(BaseModel):
@@ -211,6 +213,7 @@ class EquipmentIssueResponse(EquipmentIssueBase):
     
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class EquipmentResponse(EquipmentBase):
@@ -227,6 +230,7 @@ class EquipmentResponse(EquipmentBase):
     
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class EquipmentListResponse(BaseModel):
@@ -289,6 +293,7 @@ class ProblemSolutionResponse(ProblemSolutionBase):
     
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class ProblemSolutionVote(BaseModel):
@@ -330,7 +335,7 @@ class ChatMessageResponse(ChatMessageBase):
     id: UUID
     session_id: UUID
     citations: List[Citation] = []
-    metadata: Dict[str, Any] = {}
+    meta: Dict[str, Any] = Field(default={}, alias="metadata")
     model_used: Optional[str] = None
     tokens_used: Optional[int] = None
     response_time_ms: Optional[int] = None
@@ -339,6 +344,7 @@ class ChatMessageResponse(ChatMessageBase):
     
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class ChatSessionBase(BaseModel):
@@ -365,6 +371,7 @@ class ChatSessionResponse(ChatSessionBase):
     
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class ChatRequest(BaseModel):
@@ -384,6 +391,148 @@ class ChatResponse(BaseModel):
     suggested_followups: List[str] = []
 
 
+class ChatStreamChunk(BaseModel):
+    type: str  # "token", "citation", "done", "error"
+    content: Optional[str] = None
+    citation: Optional[Citation] = None
+    done: bool = False
+    error: Optional[str] = None
+
+
+class FeedbackCreate(BaseModel):
+    message_id: UUID
+    rating: Optional[int] = None
+    feedback_text: Optional[str] = None
+    vote: Optional[str] = None
+    meta: Dict[str, Any] = Field(default={}, alias="metadata")
+
+
+class FeedbackResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    feedback_type: Optional[str] = None
+    target_type: Optional[str] = None
+    target_id: UUID
+    content: Optional[str] = None
+    rating: Optional[int] = None
+    vote: Optional[str] = None
+    meta: Dict[str, Any] = Field(default={}, alias="metadata")
+    status: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
+# Knowledge Graph Models
+class EntityResponse(BaseModel):
+    id: UUID
+    name: str
+    type: str
+    properties: Dict[str, Any] = {}
+    description: Optional[str] = None
+    source_document_id: Optional[UUID] = None
+    confidence: float = 1.0
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
+class EntityRelationshipResponse(BaseModel):
+    id: UUID
+    source_id: UUID
+    target_id: UUID
+    relationship_type: str
+    properties: Dict[str, Any] = {}
+    confidence: float = 1.0
+    source: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
+class KnowledgeGraphQuery(BaseModel):
+    start_entity_id: Optional[UUID] = None
+    query: Optional[str] = None
+    max_depth: int = 2
+    relationship_types: Optional[List[str]] = None
+
+
+class KnowledgeGraphResponse(BaseModel):
+    nodes: List[Any] = []
+    edges: List[Any] = []
+    stats: Dict[str, Any] = {}
+
+
+# Safety Models
+class SafetyZoneResponse(BaseModel):
+    equipment_id: str
+    equipment_name: str
+    equipment_tag: Optional[str] = None
+    category: Optional[str] = None
+    location: Optional[Any] = None
+    area: Optional[str] = None
+    hazard_classification: Optional[str] = None
+    risk_level: Optional[str] = None
+
+
+class PermitResponse(BaseModel):
+    pass
+
+
+class IncidentResponse(BaseModel):
+    pass
+
+
+# Compliance Models
+class ComplianceCheckBase(BaseModel):
+    regulation: str
+    section: Optional[str] = None
+    requirement: str
+    equipment_id: Optional[UUID] = None
+    procedure_id: Optional[UUID] = None
+    status: Optional[str] = None
+    findings: Optional[str] = None
+    evidence_documents: List[Any] = []
+    corrective_action: Optional[str] = None
+    due_date: Optional[datetime] = None
+
+
+class ComplianceCheckCreate(ComplianceCheckBase):
+    pass
+
+
+class ComplianceCheckUpdate(BaseModel):
+    regulation: Optional[str] = None
+    section: Optional[str] = None
+    requirement: Optional[str] = None
+    equipment_id: Optional[UUID] = None
+    procedure_id: Optional[UUID] = None
+    status: Optional[str] = None
+    findings: Optional[str] = None
+    evidence_documents: Optional[List[Any]] = None
+    corrective_action: Optional[str] = None
+    due_date: Optional[datetime] = None
+
+
+class ComplianceCheckResponse(ComplianceCheckBase):
+    id: UUID
+    checked_at: Optional[datetime] = None
+    checked_by: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
 # Search Models
 class SearchRequest(BaseModel):
     query: str
@@ -400,7 +549,7 @@ class SearchResult(BaseModel):
     content: str
     score: float
     page_number: Optional[int] = None
-    metadata: Dict[str, Any] = {}
+    meta: Dict[str, Any] = Field(default={}, alias="metadata")
 
 
 class SearchResponse(BaseModel):
@@ -467,6 +616,7 @@ class MaintenanceRecordResponse(MaintenanceRecordBase):
     
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 # User Feedback Models
@@ -484,7 +634,7 @@ class UserFeedbackCreate(BaseModel):
     content: Optional[str] = None
     rating: Optional[int] = Field(None, ge=1, le=5)
     vote: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    meta: Dict[str, Any] = Field(default={}, alias="metadata")
 
 
 class UserFeedbackResponse(BaseModel):
@@ -496,7 +646,7 @@ class UserFeedbackResponse(BaseModel):
     content: Optional[str] = None
     rating: Optional[int] = None
     vote: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    meta: Dict[str, Any] = Field(default={}, alias="metadata")
     status: str
     reviewed_by: Optional[UUID] = None
     reviewed_at: Optional[datetime] = None
@@ -504,6 +654,7 @@ class UserFeedbackResponse(BaseModel):
     
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 # RAG Models

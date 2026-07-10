@@ -11,8 +11,5 @@
     "typecheck": "mypy app/",
     "db:migrate": "alembic upgrade head",
     "db:seed": "python scripts/seed_database.py"
-  },
-  "dependencies": {
-    "python": ">=3.11"
   }
 }

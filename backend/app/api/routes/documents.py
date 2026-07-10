@@ -82,7 +82,7 @@ async def upload_document(
         file_size=len(file_content),
         mime_type=file.content_type,
         original_filename=file.filename,
-        metadata={
+        meta={
             "tags": tags.split(",") if tags else [],
             "equipment_tags": equipment_tags.split(",") if equipment_tags else [],
         },

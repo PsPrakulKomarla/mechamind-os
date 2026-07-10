@@ -7,7 +7,7 @@ from uuid import UUID
 from app.db.database import get_db
 from app.db.models import Document, DocumentChunk, DocumentType, DocumentStatus
 from app.models.schemas import SearchRequest, SearchResponse, SearchResult
-from app.services.rag.retriever import HybridRetriever
+from app.services.rag.chain import HybridRetriever
 from app.services.vector_store.qdrant_client import QdrantVectorStore
 from app.core.config import settings
 
@@ -147,7 +147,7 @@ async def search_equipment_documents(
         # Get all documents tagged with this equipment
         result = await db.execute(
             select(Document)
-            .where(Document.metadata["equipment_tags"].contains([str(equipment_id)]))
+            .where(Document.meta["equipment_tags"].contains([str(equipment_id)]))
             .where(Document.status == DocumentStatus.READY)
             .order_by(Document.created_at.desc())
             .limit(top_k)
@@ -160,8 +160,8 @@ async def search_equipment_documents(
                 chunk_id=d.chunks[0].id if d.chunks else UUID(int=0),
                 content=d.chunks[0].content[:500] if d.chunks else "",
                 score=1.0,
-                page_number=d.chunks[0].metadata.get("page_number") if d.chunks else None,
-                metadata=d.chunks[0].metadata if d.chunks else {},
+                page_number=d.chunks[0].meta.get("page_number") if d.chunks else None,
+                meta=d.chunks[0].meta if d.chunks else {},
             )
             for d in docs
         ]
