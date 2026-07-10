@@ -388,7 +388,13 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     message: ChatMessageResponse
     session_id: UUID
+    citations: List[Citation] = []
+    rag_context: Dict[str, Any] = {}
     suggested_followups: List[str] = []
+    
+    class Config:
+        from_attributes = True
+        populate_by_name = True
 
 
 class ChatStreamChunk(BaseModel):

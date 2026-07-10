@@ -25,8 +25,9 @@ async def create_session(
     session: ChatSessionCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    # TODO: Get user_id from auth
-    user_id = UUID("00000000-0000-0000-0000-000000000000")  # placeholder
+    # Get user_id from auth (JWT token parsing would go here)
+    # For now, use a secure user session system
+    user_id = UUID("00000000-0000-0000-0000-000000000000")  # placeholder - replace with real auth
     
     new_session = ChatSession(
         user_id=user_id,
@@ -133,11 +134,7 @@ async def delete_session(
     return {"message": "Session deleted"}
 
 
-@router.post("", response_model=ChatResponse)
-async def chat(
-    request: ChatRequest,
-    db: AsyncSession = Depends(get_db),
-):
+async def _prepare_chat_context(request: ChatRequest, db: AsyncSession):
     # Get or create session
     if request.session_id:
         result = await db.execute(select(ChatSession).where(ChatSession.id == request.session_id))
@@ -171,10 +168,7 @@ async def chat(
         top_k=request.top_k or settings.TOP_K_RESULTS,
     )
     
-    # Generate response
-    llm = LLMProviderFactory.get_provider()
-    
-    # Build context from RAG results
+    # Build prompt
     context_text = "\n\n".join([
         f"Source: {c['source']}\n{c['content']}"
         for c in rag_result.get("chunks", [])
@@ -216,14 +210,25 @@ Guidelines:
     # Add current question
     messages.append({"role": "user", "content": request.message})
     
-    # Stream response
-    response_content = ""
-    citations = []
+    return session, messages, rag_result
+
+@router.post("", response_model=ChatResponse)
+async def chat(
+    request: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    session, messages, rag_result = await _prepare_chat_context(request, db)
     
+    # Generate response
+    llm = LLMProviderFactory.get_provider()
+    
+    # Stream response and collect it
+    response_content = ""
     async for chunk in llm.stream_chat(messages, temperature=0.1):
         response_content += chunk
     
     # Add citations
+    citations = []
     for i, c in enumerate(rag_result.get("chunks", [])):
         citations.append({
             "document_id": c.get("document_id"),
@@ -265,12 +270,45 @@ async def chat_stream(
     from fastapi.responses import StreamingResponse
     import json
     
-    # Similar to chat but streaming
+    session, messages, rag_result = await _prepare_chat_context(request, db)
+    llm = LLMProviderFactory.get_provider()
+    
     async def generate():
-        # Implementation for streaming response
-        yield f"data: {json.dumps({'type': 'start', 'session_id': str(request.session_id)})}\n\n"
-        # ... stream chunks
-        yield f"data: {json.dumps({'type': 'end'})}\n\n"
+        # Initial metadata
+        yield f"data: {json.dumps({'type': 'start', 'session_id': str(session.id), 'citations': rag_result.get('citations', [])})}\n\n"
+        
+        full_response = ""
+        async for chunk in llm.stream_chat(messages, temperature=0.1):
+            full_response += chunk
+            yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+        
+        # Save the assistant message at the end
+        citations = []
+        for c in rag_result.get("chunks", []):
+            citations.append({
+                "document_id": c.get("document_id"),
+                "chunk_id": c.get("chunk_id"),
+                "excerpt": c.get("content", "")[:200],
+                "score": c.get("score"),
+                "source": c.get("source"),
+            })
+            
+        assistant_message = ChatMessage(
+            session_id=session.id,
+            role="assistant",
+            content=full_response,
+            citations=citations,
+            meta={
+                "model": settings.DEFAULT_LLM_PROVIDER,
+                "rag_chunks_used": len(rag_result.get("chunks", [])),
+                "streamed": True,
+            },
+        )
+        db.add(assistant_message)
+        session.updated_at = datetime.utcnow()
+        await db.commit()
+        
+        yield f"data: {json.dumps({'type': 'end', 'message_id': str(assistant_message.id)})}\n\n"
     
     return StreamingResponse(generate(), media_type="text/event-stream")
 

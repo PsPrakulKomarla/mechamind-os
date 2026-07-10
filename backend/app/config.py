@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     PROMETHEUS_ENABLED: bool = True
     
     class Config:
-        env_file = ".env"
+        env_file = os.path.join(os.getcwd(), "..", ".env") if os.path.basename(os.getcwd()) == "backend" else ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
         extra = "ignore"

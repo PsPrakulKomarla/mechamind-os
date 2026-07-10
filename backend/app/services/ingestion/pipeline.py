@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.db.models import Document, DocumentChunk, DocumentType, DocumentStatus, Entity, Relationship
-from app.services.rag.llm_provider import EmbeddingService
+from app.services.rag.llm_provider import EmbeddingService, LLMProviderFactory
 from app.services.vector_store.qdrant_client import QdrantVectorStore
 from app.services.knowledge_graph.extractor import EntityExtractor
 from app.config import settings
@@ -34,6 +34,7 @@ class IngestionPipeline:
         self.embedding_service = EmbeddingService()
         self.vector_store = QdrantVectorStore()
         self.entity_extractor = EntityExtractor()
+        self.llm = LLMProviderFactory.get_provider()
     
     async def process_document(self, document_id: UUID, file_path: str, doc_type: DocumentType):
         """Process a document through the full pipeline."""
@@ -54,6 +55,11 @@ class IngestionPipeline:
                 # Step 1: Extract text based on document type
                 print(f"📄 Extracting text from {document_id}...")
                 extracted = await self._extract_text(file_path, doc_type)
+                
+                # Step 1b: Extract intelligent metadata
+                print(f"🧠 Extracting intelligent metadata...")
+                smart_meta = await self._extract_metadata_with_llm(extracted["text"])
+                extracted["metadata"] = {**extracted.get("metadata", {}), **smart_meta}
                 
                 # Step 2: Chunk the text
                 print(f"✂️ Chunking text...")
@@ -96,6 +102,40 @@ class IngestionPipeline:
                 print(f"❌ Document {document_id} processing failed: {e}")
                 raise
     
+    async def _extract_metadata_with_llm(self, text: str) -> Dict[str, Any]:
+        """Use LLM to extract structured metadata from document text."""
+        # Use only first 10k characters to avoid token limits
+        sample_text = text[:10000]
+        
+        prompt = (
+            "Analyze the following document text and extract key metadata in JSON format. "
+            "Return ONLY the JSON object. Fields to extract:\n"
+            "- document_subject: A brief summary of what the document is about\n"
+            "- industry: The industrial sector (e.g., Oil & Gas, Chemical, Power)\n"
+            "- security_classification: (e.g., Public, Internal, Confidential, Secret)\n"
+            "- effective_date: The date the document became effective, if found\n"
+            "- document_type: (e.g., Manual, Procedure, Report, Specification)\n"
+            "- key_entities: List of main equipment or systems mentioned\n\n"
+            f"Text:\n{sample_text}"
+        )
+        
+        try:
+            response = await self.llm.chat([
+                {"role": "system", "content": "You are an expert industrial document analyzer. Output valid JSON only."},
+                {"role": "user", "content": prompt}
+            ])
+            # Basic JSON cleanup
+            clean_json = response.strip()
+            if clean_json.startswith("```json"):
+                clean_json = clean_json[7:].rstrip("```").strip()
+            elif clean_json.startswith("```"):
+                clean_json = clean_json[3:].rstrip("```").strip()
+                
+            return json.loads(clean_json)
+        except Exception as e:
+            print(f"  ⚠️ Metadata extraction failed: {e}")
+            return {}
+
     async def _extract_text(self, file_path: str, doc_type: DocumentType) -> Dict[str, Any]:
         """Extract text from various document types."""
         
@@ -103,6 +143,8 @@ class IngestionPipeline:
             return await self._extract_pdf(file_path)
         elif doc_type == DocumentType.IMAGE:
             return await self._extract_image(file_path)
+        elif doc_type == DocumentType.WORD:
+            return await self._extract_docx(file_path)
         elif doc_type == DocumentType.SPREADSHEET:
             return await self._extract_spreadsheet(file_path)
         elif doc_type == DocumentType.TEXT:
@@ -218,6 +260,30 @@ class IngestionPipeline:
         return {
             "text": text,
             "metadata": {"page_count": 1, "pages": [{"page": 1, "chars": len(text), "method": "tesseract_ocr"}]},
+            "page_count": 1,
+        }
+
+    async def _extract_docx(self, file_path: str) -> Dict[str, Any]:
+        """Extract text from Word document."""
+        doc = DocxDocument(file_path)
+        text_parts = []
+        
+        for para in doc.paragraphs:
+            if para.text.strip():
+                text_parts.append(para.text)
+        
+        # Also extract text from tables
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                if row_text:
+                    text_parts.append(" | ".join(row_text))
+        
+        text = "\n\n".join(text_parts)
+        
+        return {
+            "text": text,
+            "metadata": {"page_count": 1}, # Word docs don't have simple page counts without rendering
             "page_count": 1,
         }
     

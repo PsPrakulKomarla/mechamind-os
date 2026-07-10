@@ -30,6 +30,7 @@ class DocumentType(str, enum.Enum):
     PDF = "pdf"
     IMAGE = "image"
     SPREADSHEET = "spreadsheet"
+    WORD = "word"
     VIDEO = "video"
     EMAIL = "email"
     TEXT = "text"
@@ -108,6 +109,8 @@ class Document(Base):
     storage_path = Column(String(1000), nullable=False)
     file_size = Column(BigInteger, nullable=False)
     mime_type = Column(String(100), nullable=True)
+    version = Column(Integer, nullable=False, default=1)
+    version_group_id = Column(UUID(as_uuid=True), nullable=True)
     page_count = Column(Integer, nullable=True)
     duration_seconds = Column(Float, nullable=True)  # for videos
     meta = Column("metadata", JSON, nullable=True, default=dict)

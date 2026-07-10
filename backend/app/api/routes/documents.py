@@ -46,6 +46,8 @@ async def upload_document(
         ext = os.path.splitext(file.filename)[1].lower()
         type_map = {
             ".pdf": DocumentType.PDF,
+            ".docx": DocumentType.WORD,
+            ".doc": DocumentType.WORD,
             ".jpg": DocumentType.IMAGE,
             ".jpeg": DocumentType.IMAGE,
             ".png": DocumentType.IMAGE,
@@ -71,6 +73,22 @@ async def upload_document(
     with open(storage_path, "wb") as f:
         f.write(file_content)
     
+    # Versioning logic: check if a document with the same title exists
+    version = 1
+    version_group_id = None
+    
+    if title:
+        result = await db.execute(
+            select(Document)
+            .where(Document.title == title)
+            .order_by(Document.version.desc())
+            .limit(1)
+        )
+        latest_doc = result.scalar_one_or_none()
+        if latest_doc:
+            version = latest_doc.version + 1
+            version_group_id = latest_doc.version_group_id or latest_doc.id
+
     # Create document record
     doc = Document(
         id=file_id,
@@ -81,7 +99,8 @@ async def upload_document(
         storage_path=storage_path,
         file_size=len(file_content),
         mime_type=file.content_type,
-        original_filename=file.filename,
+        version=version,
+        version_group_id=version_group_id,
         meta={
             "tags": tags.split(",") if tags else [],
             "equipment_tags": equipment_tags.split(",") if equipment_tags else [],
