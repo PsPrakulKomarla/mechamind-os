@@ -67,8 +67,15 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    configuration = config.get_section(config.config_ini_section, {})
+    
+    # Override sqlalchemy.url with DATABASE_URL env var if set
+    db_url = os.environ.get("DATABASE_URL", "")
+    if db_url:
+        configuration["sqlalchemy.url"] = db_url
+    
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

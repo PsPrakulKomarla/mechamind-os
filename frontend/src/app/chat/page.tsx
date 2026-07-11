@@ -1,17 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2, FileText, Copy, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { Send, Loader2, FileText, Copy, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight, Sparkles, Menu, Bell, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toaster';
 import { cn, formatDateTime, truncate } from '@/lib/utils';
 
 interface Citation {

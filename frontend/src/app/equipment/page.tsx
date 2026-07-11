@@ -597,9 +597,10 @@ export default function EquipmentPage() {
                 </TabsList>
 
                 <TabsContent value="issues" className="mt-4">
-                  <divide-y divide-gray-200>
+                  <div className="divide-y divide-gray-200">
                     <p className="text-sm text-gray-500">Common issues for this equipment type will appear here after document ingestion.</p>
-                  </TabsContent>
+                  </div>
+                </TabsContent>
                 <TabsContent value="solutions" className="mt-4">
                   <p className="text-sm text-gray-500">Crowdsourced solutions and best practices will appear here.</p>
                 </TabsContent>

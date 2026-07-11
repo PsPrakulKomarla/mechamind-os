@@ -1,0 +1,3 @@
+# Video processing dependencies (optional, large)
+# Install with: pip install -r requirements-video.txt
+openai-whisper==20231117

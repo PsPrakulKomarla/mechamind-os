@@ -51,6 +51,7 @@ class EquipmentCategory(str, enum.Enum):
     BOILER = "boiler"
     TURBINE = "turbine"
     HEAT_EXCHANGER = "heat_exchanger"
+    FAN = "fan"
     CONVEYOR = "conveyor"
     VALVE = "valve"
     MOTOR = "motor"
