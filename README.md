@@ -1,54 +1,62 @@
 # Mechamind OS
 
-Mechamind OS is an industrial knowledge intelligence platform built for maintenance, compliance, search, and decision support. The repository contains a FastAPI backend, a Next.js frontend, and Docker Compose infrastructure for local development.
+Mechamind OS is an industrial knowledge workspace made of a FastAPI backend, a Next.js frontend, and a Docker Compose stack for local development. The codebase is partly production-style and partly prototype: the chat flow is wired to the backend, while some screens such as the equipment registry use local mock data in the UI.
 
-## What's Included
+## What It Does Today
 
-- Document ingestion and retrieval workflows
-- Chat and search APIs for knowledge lookup
-- Equipment, maintenance, compliance, and safety modules
-- Knowledge graph and vector store integrations
-- A Next.js UI for the main workspace and operational views
+- Runs a FastAPI API with health, chat, search, document, equipment, maintenance, compliance, safety, and knowledge-graph route modules
+- Provides a Next.js dashboard with routes for the main dashboard, Knowledge Copilot chat, and an equipment registry view
+- Uses PostgreSQL with pgvector, Redis, Qdrant, and Neo4j when started through Docker Compose
+- Supports document upload and background ingestion on the backend
+- Uses the chat endpoint to answer questions with RAG context and citations when the LLM and data sources are configured
 
-## Tech Stack
+## Current UI Behavior
 
-- Backend: FastAPI, Alembic, PostgreSQL, Redis, Qdrant, Neo4j
-- Frontend: Next.js 14, React 18, Tailwind CSS, Radix UI
-- Tooling: npm workspaces, Python 3.11+, Docker Compose
+- Dashboard cards and activity lists are static UI data
+- The Knowledge Copilot page sends messages to `POST /api/v1/chat`
+- The equipment registry page is currently local/mock data, not backed by the API yet
+- The navigation shows more areas than are fully implemented as separate frontend pages
 
 ## Repository Layout
 
 ```
 .
-├── backend/        # FastAPI app, services, migrations, tests
-├── frontend/       # Next.js app and UI components
-├── docker/         # Docker Compose setup and initialization scripts
+├── backend/        # FastAPI app, Alembic migrations, database models, services
+├── frontend/       # Next.js app, pages, and UI components
+├── docker/         # Docker Compose stack and database init SQL
 ├── scripts/        # Utility scripts such as database seeding
 ├── shared/         # Shared schemas and types
 ├── package.json    # Root workspace scripts
 └── README.md
 ```
 
+## Tech Stack
+
+- Backend: FastAPI, SQLAlchemy, Alembic, Celery
+- Data services: PostgreSQL, Redis, Qdrant, Neo4j
+- Frontend: Next.js 14, React 18, Tailwind CSS, Radix UI
+- Tooling: npm workspaces, Python 3.11+, Docker Compose
+
 ## Prerequisites
 
 - Node.js 20+
 - Python 3.11+
 - Docker and Docker Compose
-- At least one LLM provider configured in `.env`
+- At least one LLM provider configured in `.env` if you want chat responses to work
 
 ## Configuration
 
-1. Copy `.env.example` to `.env`.
-2. Set your database, vector store, graph database, and LLM credentials.
-3. If you plan to run locally without cloud services, keep the default local endpoints in the example file.
+Create a root `.env` file and set the service credentials and local URLs the backend expects.
 
-The most important variables are:
+Important variables include:
 
 - `DATABASE_URL`
 - `REDIS_URL`
 - `QDRANT_URL`
 - `NEO4J_URI`
 - `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `OLLAMA_BASE_URL`
+
+The backend defaults are defined in [backend/app/config.py](backend/app/config.py).
 
 ## Run With Docker
 
@@ -66,9 +74,19 @@ docker exec -it meachamind-backend alembic upgrade head
 docker exec -it meachamind-backend python scripts/seed_database.py
 ```
 
+This starts:
+
+- PostgreSQL on `5432`
+- Redis on `6379`
+- Qdrant on `6333`
+- Neo4j on `7474` and `7687`
+- The FastAPI backend on `8000`
+- The Next.js frontend on `3000`
+- Celery worker and Celery beat
+
 ## Run Locally
 
-Install dependencies for the workspace and each app:
+Install dependencies for the root workspace, backend, and frontend:
 
 ```bash
 npm install
@@ -91,40 +109,27 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
-## Common URLs
+## Key Routes
 
-| Service | URL |
-| --- | --- |
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:8000 |
-| API docs | http://localhost:8000/docs |
-| Qdrant | http://localhost:6333 |
-| Neo4j Browser | http://localhost:7474 |
-| PostgreSQL | localhost:5432 |
+### Frontend
 
-## Available Backend Areas
+- `/` dashboard
+- `/chat` Knowledge Copilot
+- `/equipment` equipment registry
 
-The backend exposes routes for:
+### Backend
 
-- Chat
-- Compliance
-- Documents
-- Equipment
-- Knowledge graph
-- Maintenance
-- Safety
-- Search
+- `GET /health` health check
+- `GET /` basic service info
+- `POST /api/v1/chat` chat with RAG context
+- `POST /api/v1/search` hybrid search entry point
+- `GET/POST /api/v1/documents` document operations and upload flow
 
-## Scripts
+## Notes
 
-Root-level scripts in `package.json` include:
-
-- `npm run dev` - start backend and frontend together
-- `npm run dev:backend` - start FastAPI with Uvicorn
-- `npm run dev:frontend` - start Next.js
-- `npm run db:migrate` - apply Alembic migrations
-- `npm run db:seed` - seed sample data
-- `npm run test` - run frontend tests and backend pytest
+- Authentication is not fully wired through the backend yet; some chat session code still uses a placeholder user id
+- Several backend route modules exist even if the matching frontend page is not finished
+- The backend API docs are available at `/docs` when debug mode is enabled
 
 ## Testing
 
@@ -135,7 +140,3 @@ npm test
 cd ../backend
 pytest tests/ -v
 ```
-
-## License
-
-MIT
