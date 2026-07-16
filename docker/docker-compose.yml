@@ -113,8 +113,10 @@ services:
       - ../backend:/app
       - ../backend/uploads:/app/uploads
     depends_on:
-      - redis
-      - postgres
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     command: celery -A app.services.tasks worker --loglevel=info --concurrency=4
 
   # Celery Beat (Scheduler)
@@ -131,8 +133,10 @@ services:
     volumes:
       - ../backend:/app
     depends_on:
-      - redis
-      - postgres
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     command: celery -A app.services.tasks beat --loglevel=info
 
   # Frontend
@@ -145,7 +149,6 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_SUPABASE_URL=http://postgres:5432
     volumes:
       - ../frontend:/app
       - /app/node_modules

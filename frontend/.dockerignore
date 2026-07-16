@@ -1,27 +1,15 @@
 # Dependencies
 node_modules/
-backend/__pycache__/
-backend/.venv/
-backend/venv/
-*.pyc
-*.pyo
-*.pyd
-.Python
-pip-log.txt
-pip-delete-this-directory.txt
 
 # Build
 .next/
 out/
 build/
 dist/
-*.egg-info/
 
 # Environment
 .env
 .env.local
-.env.production
-.env.development
 .env.production.local
 .env.development.local
 
@@ -46,17 +34,6 @@ coverage/
 .coverage
 htmlcov/
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Supabase
-.supabase/
-
-# Docker
-docker-compose.override.yml
-
 # OS
 Thumbs.db
 ehthumbs.db
@@ -69,14 +46,3 @@ Desktop.ini
 *.mkv
 *.zip
 *.tar.gz
-
-# Model weights
-*.bin
-*.pt
-*.pth
-*.onnx
-*.gguf
-
-# Uploads
-uploads/
-backend/uploads/

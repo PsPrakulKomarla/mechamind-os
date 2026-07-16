@@ -1,8 +1,7 @@
 # Dependencies
-node_modules/
-backend/__pycache__/
-backend/.venv/
-backend/venv/
+__pycache__/
+.venv/
+venv/
 *.pyc
 *.pyo
 *.pyd
@@ -10,18 +9,9 @@ backend/venv/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Build
-.next/
-out/
-build/
-dist/
-*.egg-info/
-
 # Environment
 .env
 .env.local
-.env.production
-.env.development
 .env.production.local
 .env.development.local
 
@@ -36,8 +26,6 @@ dist/
 # Logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Testing
 coverage/
@@ -50,12 +38,6 @@ htmlcov/
 *.db
 *.sqlite
 *.sqlite3
-
-# Supabase
-.supabase/
-
-# Docker
-docker-compose.override.yml
 
 # OS
 Thumbs.db
@@ -79,4 +61,3 @@ Desktop.ini
 
 # Uploads
 uploads/
-backend/uploads/
