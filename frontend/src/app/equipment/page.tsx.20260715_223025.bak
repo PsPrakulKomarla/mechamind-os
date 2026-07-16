@@ -443,10 +443,7 @@ export default function EquipmentPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Equipment List ({filteredEquipment.length} of {equipment.length})</CardTitle>
             <div className="flex items-center gap-2">
-              <Select
-                value={sortField}
-                onValueChange={(value) => setSortField(value as typeof sortField)}
-              >
+              <Select value={sortField} onValueChange={setSortField}>
                 <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="name">Name</SelectItem>

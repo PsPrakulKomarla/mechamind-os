@@ -346,7 +346,6 @@ class ChatMessageResponse(ChatMessageBase):
     class Config:
         from_attributes = True
         populate_by_name = True
-        protected_namespaces = ()
 
 
 class ChatSessionBase(BaseModel):

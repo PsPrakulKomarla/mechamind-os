@@ -1,0 +1,2 @@
+- C:\Users\prakul\Desktop\projects\terminal_logs\mechamind_frontend_headers.txt: HTTP response headers captured during the MechaMind frontend smoke test.
+- C:\Users\prakul\Desktop\projects\terminal_logs\mechamind_frontend_smoke.html: HTML application shell captured from the MechaMind Vite runtime smoke test.

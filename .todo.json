@@ -1,0 +1,27 @@
+[
+  {
+    "content": "Inspect project structure and configuration",
+    "active_form": "Inspecting project structure and configuration",
+    "status": "completed"
+  },
+  {
+    "content": "Install required dependencies",
+    "active_form": "Installing required dependencies",
+    "status": "completed"
+  },
+  {
+    "content": "Run checks and identify failures",
+    "active_form": "Running checks and identifying failures",
+    "status": "completed"
+  },
+  {
+    "content": "Fix discovered errors",
+    "active_form": "Fixing discovered errors",
+    "status": "completed"
+  },
+  {
+    "content": "Run and verify the application",
+    "active_form": "Running and verifying the application",
+    "status": "in_progress"
+  }
+]

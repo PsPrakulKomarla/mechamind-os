@@ -53,7 +53,7 @@ const stats = [
   { label: 'Compliance Rate', value: '94%', change: '+2%', icon: ShieldCheck },
 ];
 
-function DashboardContent() {
+export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -323,13 +323,5 @@ function DashboardContent() {
         </main>
       </div>
     </div>
-  );
-}
-
-export default function DashboardPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
-      <DashboardContent />
-    </Suspense>
   );
 }
