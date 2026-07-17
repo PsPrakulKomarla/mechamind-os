@@ -385,6 +385,8 @@ class ChatRequest(BaseModel):
     use_rag: bool = True
     top_k: int = Field(default=10, ge=1, le=50)
     filters: Dict[str, Any] = {}
+    context: Dict[str, Any] = {}
+    equipment_id: Optional[UUID] = None
 
 
 class ChatResponse(BaseModel):
